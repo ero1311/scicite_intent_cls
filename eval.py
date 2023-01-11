@@ -15,7 +15,11 @@ DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 _, _, test_loader = get_data_loaders(args.emb_type, 1)
 
-model = SciLSTM(emb_dim=768)
+if args.emb_type == 'scibert':
+    model = SciLSTM(emb_dim=768)
+else:
+    model = SciLSTM(emb_dim=300)
+
 log_base = Path('./logs')
 model_weights = torch.load(log_base / args.exp_name / 'best.pth')
 model.load_state_dict(model_weights)

@@ -77,4 +77,5 @@ def get_data_loaders(emb_type, batch_size):
     return train_loader, val_loader, test_loader
         
 if __name__ == '__main__':
+    process_data('./data', emb_type='scibert')
     process_data('./data', emb_type='glove')
