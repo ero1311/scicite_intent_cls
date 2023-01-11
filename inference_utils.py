@@ -1,6 +1,7 @@
 from tqdm import tqdm
 from sklearn.metrics import f1_score, balanced_accuracy_score
 from utils import create_conf_matrix_fig
+import torch
 
 def epoch_step(model, data_loader, criterion, device, mode='train', optimizer=None):
     if mode == 'train':
@@ -29,3 +30,19 @@ def epoch_step(model, data_loader, criterion, device, mode='train', optimizer=No
         conf_mat_fig = create_conf_matrix_fig(targets, preds)
     
     return loss_avg, f1, acc, conf_mat_fig
+
+def eval(model, test_loader, device):
+    model.eval()
+    with torch.no_grad():
+        preds, targets = [], []
+        for x_batch, y_batch in tqdm(test_loader):
+            targets.extend(y_batch.tolist())
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            pred = model(x_batch)
+            pred = pred.max(1)[1].detach().cpu().tolist()
+            preds.extend(pred)
+    
+    conf_mat_fig = create_conf_matrix_fig(targets, preds)
+    f1, acc = f1_score(targets, preds, average='macro'), balanced_accuracy_score(targets, preds)
+
+    return preds, f1, acc, conf_mat_fig
