@@ -12,7 +12,6 @@ class SciLSTM(nn.Module):
         self.emb_dim = emb_dim
         self.dropout_rate = dropout_rate
         self.lstm = nn.LSTM(self.emb_dim, self.hidden_size, bidirectional=True, batch_first=True)
-        self.loss = nn.CrossEntropyLoss()
         self.attn = Attention(self.hidden_size*2)
         self.classifier = nn.Sequential(
             nn.Linear(100, 100),
@@ -21,19 +20,28 @@ class SciLSTM(nn.Module):
             nn.Linear(100, 20),
             nn.ReLU(),
             nn.Dropout(self.dropout_rate),
-            nn.Linear(20, n_classes),
-            nn.ReLU(),
-            nn.Softmax(dim=-1)
+            nn.Linear(20, n_classes)
         )
 
-    def forward(self, x, target):
+    def forward(self, x):
         h, _ = self.lstm(x)
         attn = self.attn(h)
         out = self.classifier(attn)
-        loss = self.loss(out, target)
 
-        return out, loss
+        return out
+
+class SciBertCls(nn.Module):
+
+    def __init__(self, dropout_rate=0.2):
+        super(SciBertCls, self).__init__()
+        n_classes = 3
+        self.dropout_rate = dropout_rate
+        self.cls = nn.Sequential(
+            nn.Linear(768, n_classes),
+        )
         
+    def forward(self, x):
+        return self.cls(x)
 
 class Attention(nn.Module):
     def __init__(self, attention_size):
@@ -53,6 +61,5 @@ class Attention(nn.Module):
 if __name__ == '__main__':
     model = SciLSTM()
     dummy_input = torch.randn(32, 60, 300)
-    dummy_target = torch.randint(0, 3, size=(32,), dtype=torch.long)
-    out, loss = model(dummy_input, dummy_target)
-    print(out.shape, loss)
+    out = model(dummy_input)
+    print(out.shape)
